@@ -11,20 +11,26 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    image: mcr.microsoft.com/dotnet/aspnet:8.0
+    build:
+      context: ../
+      dockerfile: src/backend/WebApi/Dockerfile
     depends_on:
       - postgres
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-wintuner};Username=${POSTGRES_USER:-wintuner};Password=${POSTGRES_PASSWORD:-change_me}
     ports:
       - "5001:8080"
 
   frontend:
-    image: node:20
+    build:
+      context: ../
+      dockerfile: src/frontend/Dockerfile
     depends_on:
       - backend
     environment:
       NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:5001}
     ports:
       - "3000:3000"
 
