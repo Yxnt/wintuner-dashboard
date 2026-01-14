@@ -30,15 +30,15 @@ public static class VersionComparator
         var max = Math.Max(leftTokens.Count, rightTokens.Count);
         for (var i = 0; i < max; i++)
         {
-            var leftToken = i < leftTokens.Count ? leftTokens[i] : null;
-            var rightToken = i < rightTokens.Count ? rightTokens[i] : null;
+            var hasLeft = i < leftTokens.Count;
+            var hasRight = i < rightTokens.Count;
 
-            if (leftToken is null && rightToken is null)
+            if (!hasLeft && !hasRight)
             {
                 break;
             }
 
-            if (leftToken is null)
+            if (!hasLeft)
             {
                 if (AreRemainingNumericZeros(rightTokens, i))
                 {
@@ -46,11 +46,12 @@ public static class VersionComparator
                     return true;
                 }
 
+                var rightToken = rightTokens[i];
                 result = rightToken.IsAlpha ? 1 : -1;
                 return true;
             }
 
-            if (rightToken is null)
+            if (!hasRight)
             {
                 if (AreRemainingNumericZeros(leftTokens, i))
                 {
@@ -58,9 +59,13 @@ public static class VersionComparator
                     return true;
                 }
 
+                var leftToken = leftTokens[i];
                 result = leftToken.IsAlpha ? -1 : 1;
                 return true;
             }
+
+            var leftToken = leftTokens[i];
+            var rightToken = rightTokens[i];
 
             if (leftToken.IsNumeric && rightToken.IsNumeric)
             {
