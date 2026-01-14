@@ -11,8 +11,10 @@ public static class TargetsNormalizer
     {
         var normalized = targets
             .Select(target => new Target(target.Type, target.Id.Trim()))
-            .DistinctBy(target => ($"{target.Type}", target.Id), StringComparer.OrdinalIgnoreCase)
-            .OrderBy(target => target.Type)
+            .DistinctBy(
+                target => (target.Type.ToUpperInvariant(), target.Id.ToUpperInvariant()),
+                EqualityComparer<(string Type, string Id)>.Default)
+            .OrderBy(target => target.Type, StringComparer.OrdinalIgnoreCase)
             .ThenBy(target => target.Id, StringComparer.OrdinalIgnoreCase)
             .ToList();
 

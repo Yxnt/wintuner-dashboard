@@ -40,12 +40,24 @@ public static class VersionComparator
 
             if (leftToken is null)
             {
+                if (AreRemainingNumericZeros(rightTokens, i))
+                {
+                    result = 0;
+                    return true;
+                }
+
                 result = rightToken.IsAlpha ? 1 : -1;
                 return true;
             }
 
             if (rightToken is null)
             {
+                if (AreRemainingNumericZeros(leftTokens, i))
+                {
+                    result = 0;
+                    return true;
+                }
+
                 result = leftToken.IsAlpha ? -1 : 1;
                 return true;
             }
@@ -88,6 +100,20 @@ public static class VersionComparator
         }
 
         result = 0;
+        return true;
+    }
+
+    private static bool AreRemainingNumericZeros(IReadOnlyList<VersionToken> tokens, int startIndex)
+    {
+        for (var i = startIndex; i < tokens.Count; i++)
+        {
+            var token = tokens[i];
+            if (token.IsAlpha || token.Numeric != 0)
+            {
+                return false;
+            }
+        }
+
         return true;
     }
 
