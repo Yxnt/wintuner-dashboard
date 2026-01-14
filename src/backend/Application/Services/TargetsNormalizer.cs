@@ -1,4 +1,5 @@
 using System.Text.Json;
+using WintunerDashboard.Domain.Enums;
 using WintunerDashboard.Domain.ValueObjects;
 
 namespace WintunerDashboard.Application.Services;
@@ -12,9 +13,9 @@ public static class TargetsNormalizer
         var normalized = targets
             .Select(target => new Target(target.Type, target.Id.Trim()))
             .DistinctBy(
-                target => (target.Type.ToUpperInvariant(), target.Id.ToUpperInvariant()),
-                EqualityComparer<(string Type, string Id)>.Default)
-            .OrderBy(target => target.Type, StringComparer.OrdinalIgnoreCase)
+                target => (target.Type, target.Id.ToUpperInvariant()),
+                EqualityComparer<(TargetType Type, string Id)>.Default)
+            .OrderBy(target => target.Type)
             .ThenBy(target => target.Id, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
