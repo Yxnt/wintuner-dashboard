@@ -94,7 +94,7 @@ repo/
 
 ## Validated on Next.js
 
-> Pending: use `npx create-next-app@latest` to initialize the frontend, then record the exact version from `next --version` here.
+> Next.js 15.2.3 (declared in `src/frontend/package.json`; confirm with `next --version` when registry access is available).
 
 ## Environment
 
