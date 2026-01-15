@@ -1,7 +1,12 @@
-var builder = WebApplication.CreateBuilder(args);
+using WintunerDashboard.WebApi.Endpoints;
+using WintunerDashboard.WebApi.Services;
 
 var app = builder.Build();
 
-app.MapGet("/health", () => Results.Ok("ok"));
-
-app.Run();
+app.MapHealthEndpoints();
+app.MapDashboardEndpoints();
+app.MapPackageEndpoints();
+app.MapPublishRequestEndpoints();
+app.MapJobEndpoints();
+app.MapSettingsEndpoints();
+app.MapUpdateEndpoints();
