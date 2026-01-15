@@ -46,8 +46,8 @@ public static class VersionComparator
                     return true;
                 }
 
-                var rightToken = rightTokens[i];
-                result = rightToken.IsAlpha ? 1 : -1;
+                var remainingRightToken = rightTokens[i];
+                result = remainingRightToken.IsAlpha ? 1 : -1;
                 return true;
             }
 
@@ -59,8 +59,8 @@ public static class VersionComparator
                     return true;
                 }
 
-                var leftToken = leftTokens[i];
-                result = leftToken.IsAlpha ? -1 : 1;
+                var remainingLeftToken = leftTokens[i];
+                result = remainingLeftToken.IsAlpha ? -1 : 1;
                 return true;
             }
 
