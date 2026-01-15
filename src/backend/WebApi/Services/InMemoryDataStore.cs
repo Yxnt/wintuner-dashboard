@@ -1,126 +1,14 @@
-using Microsoft.EntityFrameworkCore;
-using WintunerDashboard.Infrastructure.Persistence;
-using WintunerDashboard.WebApi;
+using System.Collections.Concurrent;
+using WintunerDashboard.WebApi.Models;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<WintunerDbContext>(options =>
-{
-    var configuration = builder.Configuration;
-    var host = configuration["POSTGRES_HOST"] ?? "localhost";
-    var port = configuration["POSTGRES_PORT"] ?? "5432";
-    var database = configuration["POSTGRES_DB"] ?? "wintuner";
-    var user = configuration["POSTGRES_USER"] ?? "wintuner";
-    var password = configuration["POSTGRES_PASSWORD"] ?? "change_me";
-    var connectionString = $"Host={host};Port={port};Database={database};Username={user};Password={password};";
-    options.UseNpgsql(connectionString);
-});
+namespace WintunerDashboard.WebApi.Services;
 
-var app = builder.Build();
-
-app.UseSwagger();
-app.UseSwaggerUI();
-
-app.MapGet("/health", () => Results.Ok("ok"));
-app.MapApiEndpoints();
-
-app.MapGet("/api/dashboard", (InMemoryDataStore store) =>
-{
-    var summary = store.GetDashboardSummary();
-    return Results.Ok(summary);
-});
-
-app.MapGet("/api/packages", (InMemoryDataStore store) => Results.Ok(store.GetPackages()));
-
-app.MapGet("/api/packages/{packageId}", (string packageId, InMemoryDataStore store) =>
-{
-    var package = store.GetPackage(packageId);
-    return package is null ? Results.NotFound() : Results.Ok(package);
-});
-
-app.MapGet("/api/publish-requests", (InMemoryDataStore store) => Results.Ok(store.GetPublishRequests()));
-
-app.MapPost("/api/publish-requests", (CreatePublishRequestRequest request, InMemoryDataStore store) =>
-{
-    var created = store.CreatePublishRequest(request);
-    return Results.Created($"/api/publish-requests/{created.Id}", created);
-});
-
-app.MapGet("/api/jobs", (InMemoryDataStore store) => Results.Ok(store.GetJobs()));
-
-app.MapGet("/api/settings", (InMemoryDataStore store) => Results.Ok(store.GetSettings()));
-
-app.Run();
-
-record DashboardSummary(
-    DashboardStats Stats,
-    IReadOnlyList<PublishRequestItem> RecentPublishRequests,
-    IReadOnlyList<JobItem> RecentJobs);
-
-record DashboardStats(
-    int TotalPackages,
-    int PendingPublishRequests,
-    int RunningJobs,
-    int FailedJobs,
-    int PublishedApps);
-
-record PackageItem(
-    string Id,
-    string Name,
-    string Publisher,
-    string CurrentVersion,
-    string Status,
-    DateTimeOffset LastUpdated,
-    IReadOnlyList<PackageVersionItem> Versions);
-
-record PackageVersionItem(
-    string Version,
-    string ReleaseChannel,
-    DateTimeOffset PublishedAt,
-    string Sha256);
-
-record PublishRequestItem(
-    string Id,
-    string PackageId,
-    string PackageName,
-    string Version,
-    string Target,
-    string Intent,
-    string Status,
-    DateTimeOffset RequestedAt,
-    string RequestedBy);
-
-record JobItem(
-    string Id,
-    string PackageId,
-    string PackageName,
-    string Version,
-    string Step,
-    string Status,
-    int Progress,
-    DateTimeOffset StartedAt,
-    DateTimeOffset? CompletedAt);
-
-record SettingsResponse(
-    string TenantName,
-    string NotificationMailbox,
-    string DefaultTarget,
-    string Environment,
-    IReadOnlyList<string> AvailableGroups);
-
-record CreatePublishRequestRequest(
-    string PackageId,
-    string Version,
-    string Target,
-    string Intent,
-    string RequestedBy);
-
-sealed class InMemoryDataStore
+public sealed class InMemoryDataStore
 {
     private readonly ConcurrentDictionary<string, PackageItem> _packages = new();
     private readonly ConcurrentQueue<PublishRequestItem> _publishRequests = new();
     private readonly ConcurrentQueue<JobItem> _jobs = new();
+    private readonly ConcurrentQueue<UpdateEventItem> _updates = new();
 
     public InMemoryDataStore()
     {
@@ -225,6 +113,35 @@ sealed class InMemoryDataStore
         {
             _jobs.Enqueue(job);
         }
+
+        var updates = new[]
+        {
+            new UpdateEventItem(
+                "up-301",
+                "vscode",
+                "Visual Studio Code",
+                "1.87.2",
+                "1.88.0",
+                "Pending Review",
+                "Medium",
+                DateTimeOffset.UtcNow.AddHours(-18),
+                "apps-team@contoso.com"),
+            new UpdateEventItem(
+                "up-302",
+                "microsoft-teams",
+                "Microsoft Teams",
+                "24102.2509.3205.8967",
+                "24105.2601.3500.1120",
+                "Approved",
+                "High",
+                DateTimeOffset.UtcNow.AddHours(-36),
+                "alex@contoso.com")
+        };
+
+        foreach (var update in updates)
+        {
+            _updates.Enqueue(update);
+        }
     }
 
     public DashboardSummary GetDashboardSummary()
@@ -273,6 +190,9 @@ sealed class InMemoryDataStore
 
     public IReadOnlyList<JobItem> GetJobs() =>
         _jobs.OrderByDescending(job => job.StartedAt).ToList();
+
+    public IReadOnlyList<UpdateEventItem> GetUpdates() =>
+        _updates.OrderByDescending(update => update.DetectedAt).ToList();
 
     public SettingsResponse GetSettings() =>
         new(
