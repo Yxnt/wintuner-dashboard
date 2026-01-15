@@ -33,7 +33,7 @@ public static class ApiEndpoints
                     p.PackageIdentifier,
                     p.DisplayName,
                     p.Publisher,
-                    p.Versions.OrderByDescending(v => v.CreatedAt)
+                    p.Versions.OrderByDescending(v => v.LastSeenAt)
                         .Select(v => v.Version)
                         .FirstOrDefault() ?? "-",
                     p.UpdatedAt
